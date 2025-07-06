@@ -1,59 +1,41 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const login = require('facebook-chat-api');
-const fs = require('fs');
+const express = require("express");
+const login = require("facebook-chat-api");
+const fs = require("fs");
 
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 
-let api = null;
-let stopFlag = false;
 const PORT = 5000;
 
-// Load Appstate from file
-const appState = JSON.parse(fs.readFileSync('./appstate.json', 'utf8'));
-
-login({ appState: appState }, (err, newApi) => {
-    if (err) {
-        console.error(' Login failed:', err);
-        return;
-    }
-
-    api = newApi;
-    console.log(`Server running on http://localhost:${PORT}`);
-});
-
-app.post('/start', (req, res) => {
-    if (!api) return res.status(500).send('API not ready');
-
+app.post("/send-message", async (req, res) => {
     const { uid, message, delay } = req.body;
+    let appstate;
 
-    if (!uid || !message || !delay) {
-        return res.status(400).send('Missing uid, message or delay');
+    try {
+        appstate = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
+    } catch (err) {
+        return res.status(500).send("❌ Failed to load appstate.json");
     }
 
-    stopFlag = false;
+    login({ appState: appstate }, (err, api) => {
+        if (err) return res.status(500).send("❌ Login failed");
 
-    const sendLoop = async () => {
-        while (!stopFlag) {
+        api.setOptions({ forceLogin: true });
+
+        const send = () => {
             api.sendMessage(message, uid, (err) => {
-                if (err) console.error('Message failed:', err);
-                else console.log(`Message sent to ${uid}`);
+                if (err) console.error("❌ Error sending message:", err);
+                else console.log("✅ Message sent at", new Date().toLocaleTimeString());
             });
-            await new Promise(resolve => setTimeout(resolve, delay * 1000));
-        }
-    };
+        };
 
-    sendLoop();
-    res.send('Started auto-sending messages.');
-});
+        send();
+        const loop = setInterval(send, delay * 1000);
 
-app.post('/stop', (req, res) => {
-    stopFlag = true;
-    res.send('Stopped sending messages.');
+        res.send("🚀 Message loop started.");
+    });
 });
 
 app.listen(PORT, () => {
-    // This will now show properly in Termux without emoji
-    console.log(`Server is live at http://localhost:${PORT}`);
+    console.log(`✅ Server running at http://localhost:${PORT}`);
 });
