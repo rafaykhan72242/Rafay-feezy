@@ -3,28 +3,22 @@ const fs = require("fs");
 
 const appState = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
 
-login({ appState }, (err, api) => {
-    if (err) {
-        console.error("❌ Login failed:", err);
-        return;
-    }
+login({ appState, selfListen: false }, (err, api) => {
+    if (err) return console.error("❌ Login failed:", err);
 
-    const uid = "9410555209045909"; // ✅ Use correct Facebook UID here
-    const message = "🔥 Working message from bot!";
+    const uid = "9410555209045909"; // your working Facebook UID
+    const message = "🔥 Patched bot: message every 5 sec!";
     const delay = 5; // seconds
 
-    console.log("🤖 Bot started. Sending messages to UID:", uid);
+    console.log("🤖 Bot started. Sending to UID:", uid);
 
-    const send = () => {
+    setInterval(() => {
         api.sendMessage(message, uid, (err) => {
             if (err) {
-                console.error("❌ Message failed:", err?.errorSummary || err);
+                console.error("❌ Send error:", err.errorSummary || err);
             } else {
-                console.log("✅ Message sent at", new Date().toLocaleTimeString());
+                console.log("✅ Sent at", new Date().toLocaleTimeString());
             }
         });
-    };
-
-    // Repeated sending
-    setInterval(send, delay * 1000);
+    }, delay * 1000);
 });
