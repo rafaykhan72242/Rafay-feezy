@@ -10,7 +10,7 @@ login({ appState }, (err, api) => {
         return;
     }
 
-    const uid = "7969592606420291"; // 👉 Replace with working UID
+    const uid = "9410555209045909"; // 👉 Replace with working UID
     const message = "🔥 Hello again! Bot is working.";
     const delay = 5; // seconds
 
