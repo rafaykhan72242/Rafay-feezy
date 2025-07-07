@@ -1,0 +1,16 @@
+[
+  {
+    "key": "c_user",
+    "value": "your_id",
+    "domain": "facebook.com",
+    "path": "/",
+    "hostOnly": false
+  },
+  {
+    "key": "xs",
+    "value": "your_xs_token",
+    "domain": "facebook.com",
+    "path": "/",
+    "hostOnly": false
+  }
+]

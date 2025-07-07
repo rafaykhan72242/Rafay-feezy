@@ -1,0 +1,8 @@
+{
+  "name": "facebook-message-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "facebook-chat-api": "^1.6.0"
+  }
+}
