@@ -1,0 +1,9 @@
+{
+  "name": "niio-autosender",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "facebook-chat-api": "^1.6.0"
+  }
+}
