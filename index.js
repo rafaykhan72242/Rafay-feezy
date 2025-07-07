@@ -1,36 +1,27 @@
 const login = require("facebook-chat-api");
 const fs = require("fs");
-const readline = require("readline");
 
 const appState = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
 
 login({ appState }, (err, api) => {
-  if (err) return console.error("Login failed:", err);
+    if (err) {
+        console.error("❌ Login failed:", err);
+        return;
+    }
 
-  console.log("✅ Logged in successfully.");
+    const uid = "7969592606420291"; // 👈 Replace with actual UID
+    const message = "Hello! Test from bot 🚀";
+    const delay = 5; // seconds
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
+    console.log("🤖 Bot started. Sending messages to UID:", uid);
 
-  rl.question("Enter UID: ", (uid) => {
-    rl.question("Type message (use \n for new lines): ", (message) => {
-      rl.question("Enter delay in seconds: ", (delayInput) => {
-        rl.close();
-        const delay = parseInt(delayInput) * 1000;
-
-        console.log(`Sending messages to ${uid} every ${delay / 1000} seconds...`);
-        setInterval(() => {
-          api.sendMessage(message.replace(/\\n/g, "\n"), uid, (err) => {
+    setInterval(() => {
+        api.sendMessage(message, uid, (err) => {
             if (err) {
-              console.log("❌ Failed to send:", err);
+                console.error("❌ Message failed:", err);
             } else {
-              console.log("✅ Message sent at", new Date().toLocaleTimeString());
+                console.log("✅ Message sent at", new Date().toLocaleTimeString());
             }
-          });
-        }, delay);
-      });
-    });
-  });
+        });
+    }, delay * 1000);
 });
