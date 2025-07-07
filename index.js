@@ -2,44 +2,51 @@ const login = require("facebook-chat-api");
 const fs = require("fs");
 const readline = require("readline");
 
-if (!fs.existsSync("appstate.json")) {
-  console.error("❌ appstate.json not found. Please add your Facebook appstate file.");
-  process.exit(1);
-}
-
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
-const ask = (query) => new Promise((resolve) => rl.question(query, resolve));
+function ask(question) {
+  return new Promise((resolve) => rl.question(question, resolve));
+}
 
-login({ appState: JSON.parse(fs.readFileSync("appstate.json", "utf8")) }, async (err, api) => {
-  if (err) return console.error("❌ Login failed:", err);
-
-  console.log("✅ Logged in successfully!");
-
-  const uid = await ask("👤 Enter UID of recipient: ");
-  const message = await ask("💬 Enter your message (use \n for new lines): ");
-  const delay = parseInt(await ask("⏱️ Enter delay in seconds: "), 10) * 1000;
-  rl.close();
-
-  if (!uid || !message || isNaN(delay)) {
-    console.error("❌ Invalid input. Please check UID, message, and delay.");
-    return;
+(async () => {
+  let appState;
+  try {
+    appState = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
+  } catch (err) {
+    console.error("❌ Failed to load appstate.json:", err.message);
+    process.exit(1);
   }
 
-  const sendMessage = () => {
-    api.sendMessage(message.replace(/\n/g, "
-"), uid, (err) => {
-      if (err) {
-        console.error("❌ Failed to send:", err);
-      } else {
-        console.log("✅ Message sent at", new Date().toLocaleTimeString());
-      }
-    });
-  };
+  const uid = await ask("Enter Facebook UID: ");
+  const rawMessage = await ask("Enter message (use \\n for new lines): ");
+  const delaySeconds = parseInt(await ask("Enter delay (seconds): "), 10);
+  rl.close();
 
-  sendMessage();
-  setInterval(sendMessage, delay);
-});
+  const message = rawMessage.replace(/\\n/g, "\n");
+  const delay = isNaN(delaySeconds) ? 10 : delaySeconds;
+
+  login({ appState }, (err, api) => {
+    if (err) {
+      console.error("❌ Login failed:", err);
+      return;
+    }
+
+    console.log("✅ Logged in successfully. Sending messages every", delay, "seconds...");
+
+    const sendLoop = () => {
+      api.sendMessage(message, uid, (err) => {
+        if (err) {
+          console.error("❌ Failed to send:", err);
+        } else {
+          console.log("✅ Message sent at", new Date().toLocaleTimeString());
+        }
+      });
+    };
+
+    sendLoop(); // first send immediately
+    setInterval(sendLoop, delay * 1000); // then send repeatedly
+  });
+})();
