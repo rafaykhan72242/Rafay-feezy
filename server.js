@@ -1,41 +1,42 @@
-const express = require("express");
-const login = require("facebook-chat-api");
-const fs = require("fs");
+const express = require("express"); const login = require("facebook-chat-api"); const fs = require("fs"); const readline = require("readline");
 
-const app = express();
+const app = express(); const PORT = 5000;
+
 app.use(express.json());
 
-const PORT = 5000;
+// Load appstate let appState; try { appState = JSON.parse(fs.readFileSync("appstate.json", "utf8")); } catch (error) { console.error("❌ Failed to read appstate.json. Make sure the file exists and is valid JSON."); process.exit(1); }
 
-app.post("/send-message", async (req, res) => {
-    const { uid, message, delay } = req.body;
-    let appstate;
+// Login and prompt user for input login({ appState }, (err, api) => { if (err) { console.error("❌ Login error:", err); return; } console.log("✅ Logged in successfully!");
 
-    try {
-        appstate = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
-    } catch (err) {
-        return res.status(500).send("❌ Failed to load appstate.json");
-    }
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-    login({ appState: appstate }, (err, api) => {
-        if (err) return res.status(500).send("❌ Login failed");
+rl.question("Enter UID to send message: ", (uid) => { rl.question("Enter message (use | to separate multiple messages): ", (messageInput) => { const messages = messageInput.split("|").map(m => m.trim());
 
-        api.setOptions({ forceLogin: true });
+rl.question("Enter delay in seconds: ", (delayInput) => {
+    const delay = parseInt(delayInput) * 1000;
 
-        const send = () => {
-            api.sendMessage(message, uid, (err) => {
-                if (err) console.error("❌ Error sending message:", err);
-                else console.log("✅ Message sent at", new Date().toLocaleTimeString());
-            });
-        };
+    console.log("🚀 Starting message loop...");
+    let index = 0;
 
-        send();
-        const loop = setInterval(send, delay * 1000);
+    const sendMessage = () => {
+      if (index >= messages.length) index = 0; // loop messages
+      api.sendMessage(messages[index], uid, (err) => {
+        if (err) {
+          console.error("❌ Error sending message:", err);
+        } else {
+          console.log(`✅ Message sent: "${messages[index]}" at ${new Date().toLocaleTimeString()}`);
+        }
+      });
+      index++;
+    };
 
-        res.send("🚀 Message loop started.");
-    });
+    sendMessage(); // Send first
+    setInterval(sendMessage, delay);
+    rl.close();
+  });
 });
 
-app.listen(PORT, () => {
-    console.log(`✅ Server running at http://localhost:${PORT}`);
-});
+}); });
+
+app.listen(PORT, () => { console.log(🌐 Server running on http://localhost:${PORT}); });
+
